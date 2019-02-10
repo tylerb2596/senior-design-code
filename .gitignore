@@ -2,10 +2,10 @@
 #	*.o
 #	*.exe
 #	*.out
-#	*.h.ghc
+#	*.h.gch
 
 #files to be excluded:
 *.o
 *.exe
 *.out
-*.h.ghc
+*.h.gch
