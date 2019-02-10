@@ -1,0 +1,11 @@
+#untracked files:
+#	*.o
+#	*.exe
+#	*.out
+#	*.h.ghc
+
+#files to be excluded:
+*.o
+*.exe
+*.out
+*.h.ghc
