@@ -14,6 +14,10 @@ Also install the linux Ubuntu virtual machine which can be found at
 https://downloads.ubiquityrobotics.com/ so that you can interact with the
 existing code base for the Ubiquity Magni robotic platform.
 
+Read the documentation at the following link to learn how to use the cmd_vel topic
+and the odometry
+https://github.com/UbiquityRobotics/ubiquity_motor
+
 
 ## Authors
 
