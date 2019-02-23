@@ -14,6 +14,9 @@ Also install the linux Ubuntu virtual machine which can be found at
 https://downloads.ubiquityrobotics.com/ so that you can interact with the
 existing code base for the Ubiquity Magni robotic platform.
 
+To read how to use the ubiquity motor node please see:
+https://github.com/UbiquityRobotics/ubiquity_motor
+
 
 ## Authors
 
