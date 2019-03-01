@@ -124,9 +124,9 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/RMDC_test.cpp
-# )
+ add_library(mover
+   src/rmdc_mover.cpp
+ )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -205,5 +205,6 @@ add_executable(circle_test src/circle.cpp)
 add_executable(square_test src/square.cpp)
 target_link_libraries(circle_test ${catkin_LIBRARIES})
 target_link_libraries(square_test ${catkin_LIBRARIES})
+target_link_libraries(square_test PRIVATE mover)
 add_dependencies(circle_test circle_test_generate_messages_cpp)
 add_dependencies(square_test square_test_generate_messages_cpp)

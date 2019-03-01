@@ -12,8 +12,10 @@
 #include "ros/ros.h"
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/Pose.h"
+#include "geometry_msgs/Quaternion.h"
 #include "nav_msgs/Odometry.h"
-#include <math.h>
+#include "turtlesim/Pose.h"
+#include <cmath>
 
 class rmdc_mover {
 
@@ -53,7 +55,7 @@ private:
 	double quar_to_yaw(const geometry_msgs::Quaternion & quart);
 
 	//private function to handle incoming odometry messages
-	void handle_odometry(const nav_msgs::Odometry & odom);
+	void handle_odometry(const turtlesim::Pose & pose);
 
 	//private function to do mod on doubles
 	double double_mod(double num, double mod);
@@ -67,7 +69,7 @@ public:
 	//constructor for the class
 	rmdc_mover(const ros::NodeHandle & nh);
 
-	//rotate by deg degrees counterclockwise
+	//rotate by deg degrees counterclockwises
 	void rotate(double deg);
 
 	//move forward for a given distance
@@ -78,6 +80,7 @@ public:
 
 	//stop moving altogether
 	void stop_moving();
+
 
 };
 

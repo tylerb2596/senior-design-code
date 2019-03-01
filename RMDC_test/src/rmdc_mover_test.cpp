@@ -4,20 +4,17 @@
 //created by Tyler Brown
 
 
-//Implementation of the class members in rmdc_mover class
+//Implementation of the class members in rmdc_move class
 
-#include "rmdc_mover.h"
+#include "rmdc_mover_test.h"
 
 //public members
 
-
 //make the rmdc_move object
-rmdc_mover::rmdc_mover(const ros::NodeHandle & nh) : node(nh),
-max_rotation_speed(M_PI/2), forward_speed(1.0), stop(false) {
+rmdc_mover::rmdc_mover(const ros::NodeHandle & nh) : node(nh), max_rotation_speed(M_PI/2), forward_speed(1.0), stop(false) {
 
 	//subscribe to topic sending out odometry messages
-	this -> sub = node.subscribe("turtle1/pose", 1,
-		&rmdc_mover::handle_odometry, this);
+	this -> sub = node.subscribe("turtle1/pose", 1, &rmdc_mover::handle_odometry, this);
 
 	//make the publisher object
 	this -> pub = node.advertise<geometry_msgs::Twist>("turtle1/cmd_vel", 0);
@@ -37,8 +34,11 @@ max_rotation_speed(M_PI/2), forward_speed(1.0), stop(false) {
 
 }
 
-//fucntion to rotate counterclockwise a given angle
+//fucntion to rotate given an angle
+//if the value is negative it will rotate clockwise,
+//if its positive it will rotate counterclockwise
 void rmdc_mover::rotate(double angle) {
+
 	//if the angle is higher than 360 then reduce it to 360
 	angle =  double_mod(angle, 360);
 
@@ -85,6 +85,7 @@ void rmdc_mover::rotate(double angle) {
 		rad_angle = std::abs(goal_angle - this -> current_orientation);
 
 	}
+
 }
 
 
@@ -104,7 +105,7 @@ void rmdc_mover::stop_moving() {
 	msg.angular = this -> ang;
 
 	//monitor the loop rate
-	ros::Rate loop_rate(50);
+	ros::Rate loop_rate(10);
 
 	//publish the message to stop 50 times
 	for (int i = 0; i < 50; ++i) {
@@ -129,22 +130,25 @@ double rmdc_mover::degs_to_rads(double angle) {
 //convert quarternian coordinates to yaw
 double rmdc_mover::quar_to_yaw(const geometry_msgs::Quaternion & quart) {
 
+	double yaw;
+
 	//convert quarternian orientation to yaw
 	double siny_cosp = +2.0 * (quart.w * quart.z + quart.x * quart.y);
 	double cosy_cosp = +1.0 - 2.0 * (quart.y * quart.y + quart.z * quart.z);
-	double yaw = atan2(siny_cosp, cosy_cosp);
+	yaw = atan2(siny_cosp, cosy_cosp);
 
 	return yaw;
 }
 
 //TODO: change this function to handle ying yings messages
 //handle messages coming from the odometry
-void rmdc_mover::handle_odometry(const nav_msgs::Odometry & odom) {
+void rmdc_mover::handle_odometry(const turtlesim::Pose & pose) {
 
 	//set the current orientation to the odometry's estimation of it
-	this -> current_orientation = quar_to_yaw(odom.pose.pose.orientation);
+	this -> current_orientation = std::abs(pose.theta);
 
 }
+
 
 //function to do mod on doubles
 double rmdc_mover::double_mod(double num, double mod) {
