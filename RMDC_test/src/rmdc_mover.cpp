@@ -7,20 +7,21 @@
 //Implementation of the class members in rmdc_mover class
 
 #include "rmdc_mover.h"
+#include <iostream>
 
 //public members
 
 
 //make the rmdc_move object
 rmdc_mover::rmdc_mover(const ros::NodeHandle & nh) : node(nh),
-max_rotation_speed(M_PI/2), forward_speed(1.0), stop(false) {
+max_rotation_speed(M_PI/4), forward_speed(1.0), stop(false) {
 
 	//subscribe to topic sending out odometry messages
-	this -> sub = node.subscribe("turtle1/pose", 1,
+	this -> sub = node.subscribe("odom", 1,
 		&rmdc_mover::handle_odometry, this);
 
 	//make the publisher object
-	this -> pub = node.advertise<geometry_msgs::Twist>("turtle1/cmd_vel", 0);
+	this -> pub = node.advertise<geometry_msgs::Twist>("cmd_vel", 0);
 
 	//start current orientation is always zero
 	this -> current_orientation = 0.0;
@@ -39,11 +40,17 @@ max_rotation_speed(M_PI/2), forward_speed(1.0), stop(false) {
 
 //fucntion to rotate counterclockwise a given angle
 void rmdc_mover::rotate(double angle) {
+
+	//spin once
+	ros::spinOnce();
+
 	//if the angle is higher than 360 then reduce it to 360
-	angle =  double_mod(angle, 360);
+	angle = double_mod(angle, 360);
 
 	//find out how many radians we need to rotate
 	double rad_angle = this -> degs_to_rads(angle);
+
+	std::cout << rad_angle << std::endl;
 
 	//determine goal angle to reach
 	double goal_angle = this -> current_orientation + rad_angle;
@@ -60,12 +67,12 @@ void rmdc_mover::rotate(double angle) {
 	this -> ang.y = 0.0;
 
 	//slow down the loop
-	ros::Rate loop_rate(10);
+	ros::Rate loop_rate(5);
 
 	//correct for the angular periodicity
 	goal_angle = goal_angle > 2*M_PI ? goal_angle - 2*M_PI : goal_angle;
 
-	while (rad_angle > 0.03) {
+	while (rad_angle > 0.2	&& ros::ok()) {
 
 		if (rad_angle > max_rotation_speed) {
 			this -> ang.z = max_rotation_speed;
@@ -130,8 +137,8 @@ double rmdc_mover::degs_to_rads(double angle) {
 double rmdc_mover::quar_to_yaw(const geometry_msgs::Quaternion & quart) {
 
 	//convert quarternian orientation to yaw
-	double siny_cosp = +2.0 * (quart.w * quart.z + quart.x * quart.y);
-	double cosy_cosp = +1.0 - 2.0 * (quart.y * quart.y + quart.z * quart.z);
+	double siny_cosp = 2.0 * (quart.w * quart.z + quart.x * quart.y);
+	double cosy_cosp = 1.0 - 2.0 * (quart.y * quart.y + quart.z * quart.z);
 	double yaw = atan2(siny_cosp, cosy_cosp);
 
 	return yaw;
@@ -142,7 +149,15 @@ double rmdc_mover::quar_to_yaw(const geometry_msgs::Quaternion & quart) {
 void rmdc_mover::handle_odometry(const nav_msgs::Odometry & odom) {
 
 	//set the current orientation to the odometry's estimation of it
-	this -> current_orientation = quar_to_yaw(odom.pose.pose.orientation);
+	double yaw = quar_to_yaw(odom.pose.pose.orientation);
+
+	if (yaw < 0) {
+		yaw = yaw + 2*M_PI;
+	}
+
+	this -> current_orientation = yaw;
+
+	std::cout << current_orientation << std::endl;
 
 }
 
@@ -169,7 +184,7 @@ double rmdc_mover::double_mod(double num, double mod) {
 	}
 
 
-	return how_many * std::abs(num);
+	return how_many * std::abs(mod);
 
 }
 
@@ -179,7 +194,7 @@ void rmdc_mover::settle() {
 	double beginning_orientation = this -> current_orientation;
 	int count = 0;
 
-	while(count < 10) {
+	while(count < 20) {
 		if (beginning_orientation == current_orientation) {
 			count++;
 		} else {
