@@ -21,7 +21,7 @@ max_rotation_speed(M_PI/8), forward_speed(0.4), stop(false) {
         &rmdc_mover::handle_odometry, this);
 
     //subscribe to topic sending control messages
-    this -> sub[1] = node.subscribe("control", 10,
+    this -> sub[1] = node.subscribe("state_machine/control", 10,
         &rmdc_mover::handle_controls, this);
 
 
