@@ -11,6 +11,8 @@
 #define NAVIGATION_STATE
 
 #include "ros/ros.h"
+#include "rmdc_mover.h"
+
 
 
 int main(int argc, char ** argv) {
@@ -18,10 +20,14 @@ int main(int argc, char ** argv) {
 	//intitialize ROS
     ros::init(argc, argv, "navigation_state");
 
-    // NodeHandle is the main access point to communications with the ROS system.
-    // The first NodeHandle constructed will fully initialize this node, and the last
-    // NodeHandle destructed will close down the node.
+    // NodeHandle is the main access point to communications with the ROS
+    // system. The first NodeHandle constructed will fully initialize this node,
+    // and the last NodeHandle destructed will close down the node.
     ros::NodeHandle n;
+
+    while(true) {
+
+    }
 
     return(0);
 }
