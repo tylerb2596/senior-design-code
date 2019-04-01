@@ -16,7 +16,7 @@
 #include "std_msgs/String.h"
 #include "std_msgs/Int16.h"
 #include "sensor_msgs/Range.h"
-#include "rmdc_class.h"
+#include "../include/rmdc_state.h"
 #include <string>
 #include <iostream>
 
@@ -44,20 +44,20 @@ public:
         for(int i = 0; i < this -> num_sonars; ++i) {
 
             std::string temp_string = "/pi_sonar/sonar_";
-            temp_string.append(std::string((char)i));
+            temp_string.append(std::string(std::to_string(i)));
 
             this -> sonar_subscribers.push_back(
                 (this -> nh).subscribe(temp_string.c_str(), 10,
-                    &sonar_callback, this));
+                    &decision_state::sonar_callback, this));
 
         }
 
         //subscribe to timer messages
         this -> timer_subscriber = (this -> nh).subscribe(
-            "/state_machine/timer", 10, &timer_callback, this);
+            "/state_machine/timer", 10, &decision_state::timer_callback, this);
 
         //set up the publisher to send control messages
-        this -> publisher = (this -> nh)
+        this -> decision_publisher = (this -> nh)
             .advertise<state_machine::control>("/state_machine/control", 0);
 
     }

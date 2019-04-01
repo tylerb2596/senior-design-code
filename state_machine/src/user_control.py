@@ -14,7 +14,7 @@ control_socket = 4200
 
 def user_control():
 
-	#publisher to send messages
+    #publisher to send messages
     pub = rospy.Publisher('/state_machine/user_control', String, queue_size=10)
 
     #initialize the rosnode

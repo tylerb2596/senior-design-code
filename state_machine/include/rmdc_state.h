@@ -18,9 +18,6 @@ public:
 	virtual void run() = 0;
 	virtual void init(int argc, char** argv) = 0;
 
-//private members
-private:
-
 	//node handler object
 	 ros::NodeHandle nh;
 

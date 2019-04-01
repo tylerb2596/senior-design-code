@@ -22,11 +22,11 @@ int elapsed_time = 0;
 bool paused = false;
 
 //function used to handle the user_control messages coming in
-void user_control_callback(std_msgs::String& message);
+void user_control_callback(const std_msgs::String& message);
 
 
 //main function
-void main(int argc, char** argv) {
+int main(int argc, char** argv) {
 
 	//initialize ros
 	ros::init(argc, argv, "state_machine_timer");
@@ -72,7 +72,7 @@ void main(int argc, char** argv) {
 	return 0;
 }
 
-void user_control_callback(std_msgs::String& message) {
+void user_control_callback(const std_msgs::String& message) {
 
 	if(std::string(message.data).compare("start") == 0) {
 

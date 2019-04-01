@@ -58,10 +58,10 @@ void rmdc_mover::reset() {
 }
 
 //function to get the current distance of the robot from the origin
-void rmdc_mover::distance_from_origin() {
+double rmdc_mover::distance_from_origin() {
 
     return this -> distance(this -> x_origin, this -> y_origin,
-        this -> x_position, this -> y_position)
+        this -> x_position, this -> y_position);
 }
 
 //fucntion to rotate counterclockwise a given angle

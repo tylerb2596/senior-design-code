@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(state_machine)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  geometry_msgs
   message_generation
 )
 
@@ -123,9 +124,9 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/state_machine.cpp
-# )
+add_library(mover
+  include/rmdc_mover.cpp
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -201,5 +202,10 @@ include_directories(
 # catkin_add_nosetests(test)
 
 add_executable(decision_state src/decision_state.cpp)
+add_executable(timer src/timer.cpp)
+add_executable(navigation_state src/navigation_state.cpp)
+target_link_libraries(timer ${catkin_LIBRARIES})
+target_link_libraries(navigation_state ${catkin_LIBRARIES})
 target_link_libraries(decision_state ${catkin_LIBRARIES})
+target_link_libraries(navigation_state PRIVATE mover)
 add_dependencies(decision_state state_machine_generate_messages_cpp)

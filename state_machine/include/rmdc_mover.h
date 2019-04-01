@@ -103,7 +103,7 @@ public:
     void reset();
 
     //function to get the robots current distance from its percieved origin
-    void distance_from_origin();
+    double distance_from_origin();
 
 };
 
