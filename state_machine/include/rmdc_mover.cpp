@@ -45,6 +45,25 @@ max_rotation_speed(M_PI/8), forward_speed(0.4), stop(false) {
 
 }
 
+//function to reset the origin of the robot
+void rmdc_mover::reset() {
+
+    //spin ros to get the call back from odometry
+    ros::spinOnce();
+
+    //set the origin to the current location
+    this -> x_origin = this -> x_position;
+    this -> y_origin = this -> y_position;
+
+}
+
+//function to get the current distance of the robot from the origin
+void rmdc_mover::distance_from_origin() {
+
+    return this -> distance(this -> x_origin, this -> y_origin,
+        this -> x_position, this -> y_position)
+}
+
 //fucntion to rotate counterclockwise a given angle
 void rmdc_mover::rotate(double angle) {
 

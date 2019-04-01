@@ -48,6 +48,10 @@ private:
     double x_position;
     double y_position;
 
+    //origin locations
+    double x_origin;
+    double y_origin;
+
     //current covariance for the positions
     double current_x_covariance;
     double current_y_covariance;
@@ -93,6 +97,13 @@ public:
 
     //move forward until told to stop
     void move_forward();
+
+    //function to reset the "origin" of the robot so that it can start the
+    //algorithm over again
+    void reset();
+
+    //function to get the robots current distance from its percieved origin
+    void distance_from_origin();
 
 };
 

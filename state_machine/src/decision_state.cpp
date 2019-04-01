@@ -30,7 +30,7 @@ public:
 
     //constructor
     decision_state(int how_many) : num_sonars(how_many),
-        dump_interval(60), return_to_home(300) {}
+        dump_interval(60), return_to_home_interval(300) {}
 
     //initialize the node
     virtual void init(int argc, char** argv) {
@@ -82,7 +82,7 @@ private:
 
     //constant parameters
     const int dump_interval;
-    const int return_to_home;
+    const int return_to_home_interval;
 
     //subscribe to sonar messages
     std::vector<ros::Subscriber> sonar_subscribers;
