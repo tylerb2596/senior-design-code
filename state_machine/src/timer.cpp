@@ -74,11 +74,11 @@ int main(int argc, char** argv) {
 
 void user_control_callback(const std_msgs::String& message) {
 
-	if(std::string(message.data).compare("start") == 0) {
+	if(std::string(message.data).compare("start") == 0 && paused) {
 
 		start_time = clock();
 
-	} else if(std::string(message.data).compare("pause") == 0) {
+	} else if(std::string(message.data).compare("stop") == 0) {
 
 		paused = true;
 
