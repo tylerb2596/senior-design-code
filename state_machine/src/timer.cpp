@@ -9,14 +9,14 @@
 #include "ros/ros.h"
 #include "std_msgs/Int16.h"
 #include "std_msgs/String.h"
-#include <ctime>
+#include <chrono>
 #include <string>
 
 //start time variable
-clock_t start_time;
+std::chrono::high_resolution_clock::time_point start_time;
 
 //elapsed time since the interval started
-int elapsed_time = 0;
+std::chrono::duration<double> elapsed_time;
 
 //boolean to know if the program has been paused, stopped or started
 bool paused = false;
@@ -47,17 +47,19 @@ int main(int argc, char** argv) {
 	ros::Rate loop_rate(100);
 
 	//get the start time
-	start_time = clock();
+	start_time = std::chrono::high_resolution_clock::now();
 
 	while(ros::ok()) {
 
 		if(!paused) {
-			elapsed_time = clock() - start_time;
+			elapsed_time = (std::chrono::high_resolution_clock::now() -
+				start_time);
 		}
 
 		//setup the message
 		std_msgs::Int16 msg;
-		msg.data = elapsed_time;
+		msg.data = (int) (std::chrono::duration_cast<std::chrono::milliseconds>
+			(elapsed_time).count() / 1000);
 
 		//publish the message
 		timer_publisher.publish(msg);
@@ -76,7 +78,8 @@ void user_control_callback(const std_msgs::String& message) {
 
 	if(std::string(message.data).compare("start") == 0 && paused) {
 
-		start_time = clock();
+		start_time = std::chrono::high_resolution_clock::now();
+		paused = false;
 
 	} else if(std::string(message.data).compare("stop") == 0) {
 

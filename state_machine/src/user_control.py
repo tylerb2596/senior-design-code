@@ -10,7 +10,7 @@ import rospy
 import socket
 from std_msgs.msg import String
 
-control_socket = 4200
+control_port = 4200
 
 def user_control():
 
@@ -24,11 +24,11 @@ def user_control():
     rate = rospy.Rate(10) # 10hz
 
     #create a socket to use in recieving messages
-    user_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    user_socket.bind(('', control_socket))
+    user_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    user_socket.bind(('', control_port))
 
     #infinite loop used to recieve UDP packets and publish them to ROS
-     while not rospy.is_shutdown():
+    while not rospy.is_shutdown():
         message, address = user_socket.recvfrom(1024)
         message = message.lower()
         pub.publish(message)

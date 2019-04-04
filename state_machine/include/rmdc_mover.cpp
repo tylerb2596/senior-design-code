@@ -21,12 +21,16 @@ max_rotation_speed(M_PI/8), forward_speed(0.4), stop(false) {
         &rmdc_mover::handle_odometry, this);
 
     //subscribe to topic sending control messages
-    this -> sub[1] = node.subscribe("state_machine/control", 10,
+    this -> sub[1] = node.subscribe("/state_machine/control", 10,
         &rmdc_mover::handle_controls, this);
 
 
     //make the publisher object
     this -> pub = node.advertise<geometry_msgs::Twist>("cmd_vel", 0);
+
+    //make the confirmation publisher
+    this -> confirmation_publisher = node.advertise<std_msgs::String>(
+        "/state_machine/confirmation", 0);
 
     //start current orientation is always zero
     this -> current_orientation = 0.0;
@@ -120,6 +124,11 @@ void rmdc_mover::rotate(double angle) {
         rad_angle = std::abs(goal_angle - this -> current_orientation);
 
     }
+
+    //send confirmation
+    std_msgs::String con_message;
+    con_message.data = "turn";
+    this -> confirmation_publisher.publish(con_message);
 
     //make sure to wait 2 seconds before doing anything else
     ros::Duration(2).sleep();

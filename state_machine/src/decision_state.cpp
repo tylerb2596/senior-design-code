@@ -20,6 +20,8 @@
 #include "../include/rmdc_state.h"
 #include <string>
 #include <iostream>
+#include <time.h>
+#include <stdlib.h>
 
 //class to be used as a container for the decision state methods, callbacks and
 //data
@@ -31,17 +33,20 @@ public:
 
     //constructor
     decision_state(int how_many) : num_sonars(how_many),
-        dump_interval(60), return_to_home_interval(300), radius(10) {}
+        dump_interval(60), return_to_home_interval(300), radius(10),
+        correcting(false) {
+            srand(time(NULL));
+        }
 
     //constructor
     decision_state(int how_many, double rad) : num_sonars(how_many),
-        dump_interval(60), return_to_home_interval(300), radius(rad) {}
+        dump_interval(60), return_to_home_interval(300), radius(rad),
+        correcting(false) {
+            srand(time(NULL));
+        }
 
     //initialize the node
-    virtual void init(int argc, char** argv) {
-
-        //initialize ros with the command line arguments
-        ros::init(argc, argv, "decision_state");
+    virtual void init() {
 
         //setup publisher and subscriber
 
@@ -70,6 +75,11 @@ public:
         this -> distance_subscriber = (this -> nh).subscribe(
             "/state_machine/distance", 10,
             &decision_state::distance_callback, this);
+
+        //subscribe to confirmation messages
+        this -> confirmation_subscriber = (this -> nh).subscribe(
+            "/state_machine/distance", 10,
+            &decision_state::confirmation_callback, this);
 
         //set up the publisher to send control messages
         this -> decision_publisher = (this -> nh)
@@ -111,6 +121,9 @@ private:
     //subscribe to the distance messages
     ros::Subscriber distance_subscriber;
 
+    //subscribe to confirmation messages
+    ros::Subscriber confirmation_subscriber;
+
     //publisher for control messages
     ros::Publisher decision_publisher;
 
@@ -123,9 +136,91 @@ private:
     //radius the robot is allowed to stay within in meters
     const double radius;
 
+    //variable to act as a sort of mutex lock to prevent the sonars from
+    //interruoting an adjustment in progress
+    bool correcting;
+
     //callback function for the sonar array
     void sonar_callback(const sensor_msgs::Range& message) {
 
+        //if a correction is in progress then dont
+        if (this -> correcting) {
+            return;
+        }
+
+        //first get the frame_id of sonar that this message is from
+        std::string frame_id = message.header.frame_id;
+
+        int sonar_num = std::atoi(frame_id.substr(6, 1).c_str());
+
+        //now switch on the sonar_num
+        switch(sonar_num) {
+            case 0:
+
+                //sonar on the right side of the robot
+                //if it gets too close to something turn 15 degrees
+                if (message.range <= 1 && message.range > 0.2) {
+
+                    this -> sonar_adjustment(15);
+
+                }
+
+                break;
+
+            case 1:
+
+                //sonar on the front of the robot facing 45 degrees to the
+                //robots left
+                //if something gets too close then turn between 90 and 270
+                //degrees
+                if (message.range <= 1 && message.range > 0.2) {
+
+                    this -> sonar_adjustment(this -> determine_random_angle());
+
+                }
+
+                break;
+
+            case 2:
+
+                //sonar on the front of the robot facing 45 degrees to the
+                //robots right
+                //if something gets too close then turn between 90 and 270
+                //degrees
+                if (message.range <= 1 && message.range > 0.2) {
+
+                    this -> sonar_adjustment(this -> determine_random_angle());
+
+                }
+
+                break;
+
+            case 3:
+
+                //sonar on the front of the robot
+                //if it gets too close to something turn to a random angle
+                //between 90 and 270 degrees
+                if(message.range <= 1 && message.range > 0.2) {
+
+                    this -> sonar_adjustment(this -> determine_random_angle());
+
+                }
+
+                break;
+
+            case 4:
+
+                //sonar on the left side of the robot
+                //if it gets too close to something turn to an angle between 180
+                //and 270 degrees
+                if(message.range <= 1 && message.range > 0.2) {
+
+                    this -> sonar_adjustment((rand() % 90) + 180);
+
+                }
+
+                break;
+        }
     }
 
     //callback function for timer interrupts
@@ -145,17 +240,12 @@ private:
         //determine the correct message to send
         if (string_message.compare("stop") == 0) {
 
-            msg.message = "stop";
+            this -> start_stop_message("stop");
 
         } else if(string_message.compare("start") ==0) {
 
-            msg.message = "start";
+            this -> start_stop_message("start");
         }
-
-        msg.num = 0;
-
-        //publish the message
-        this -> decision_publisher.publish(msg);
 
     }
 
@@ -168,32 +258,101 @@ private:
         //make sure the robot stays within the given radius
         if (distance_traveled > this -> radius) {
 
-            //create control message
-            state_machine::control msg;
-
             //first stop the robot
-            msg.message = "start";
-            msg.num = 0;
-
-            this -> decision_publisher.publish(msg);
+            this -> start_stop_message("start");
 
             //determine a random angle to turn to and turn that way
-            msg.message = "turn";
-            msg.num = this -> determine_random_angle();
-
-            this -> decision_publisher.publish(msg);
-
+            this -> turn_message(this -> determine_random_angle());
 
             //move forward
-            msg.message = "forward";
-            msg.num = 0;
-
-            this -> decision_publisher.publish(msg);
+            this -> forward_message();
 
         }
     }
 
-    double determine_random_angle() {
+    //callback function for the confirmation messages
+    void confirmation_callback(const std_msgs::String& message) {
+
+        //get the message as a string
+        std::string con_message(message.data);
+
+        //if the message is turn then we are done correcting
+        if (con_message.compare("turn") == 0) {
+
+            this -> correcting = false;
+
+        }
+    }
+
+    //generate a random angle to turn to between 90 and 270
+    int determine_random_angle() {
+
+        //generate the number using rand and return it
+        return (rand() % 80) + 190;
+
+    }
+
+    //function to send a turn message more easily
+    void turn_message(int angle) {
+
+        //make a message
+        state_machine::control msg;
+
+        //fill up the message
+        msg.message = "turn";
+        msg.num = angle;
+
+        //send the message
+        this -> decision_publisher.publish(msg);
+
+
+    }
+
+    //function to make sending a forward messafe easier
+    void forward_message(int how_far = 0) {
+
+        //make a message
+        state_machine::control msg;
+
+        //fill up the message
+        msg.message = "forward";
+        msg.num = how_far;
+
+        //send the message
+        this -> decision_publisher.publish(msg);
+    }
+
+    //function to make sending start/stop messages easier
+    void start_stop_message(const char* star_sto) {
+
+        //make a message
+        state_machine::control msg;
+
+        //fill up the message
+        msg.message = star_sto;
+        msg.num = 0;
+
+        //send the message
+        this -> decision_publisher.publish(msg);
+    }
+
+    //function to abstract out sonar adjustment code
+    void sonar_adjustment(int angle) {
+
+        //tell the state that we are currently correcting
+        this -> correcting = true;
+
+        //stop the robot from doing what its doing
+        this -> start_stop_message("stop");
+
+        //enable the movement api again
+        this -> start_stop_message("start");
+
+        //turn to the specified angle
+        this -> turn_message(angle);
+
+        //continue moving forward
+        this -> forward_message();
 
     }
 
@@ -203,11 +362,14 @@ private:
 //main function to setup and run the decision state
 int main(int argc, char ** argv) {
 
+    //initialize ros with the command line arguments
+    ros::init(argc, argv, "decision_state");
+
     //create a decision_state object
-    decision_state d_state(6);
+    decision_state d_state(5);
 
     //intialize the decision state
-    d_state.init(argc, argv);
+    d_state.init();
 
     //run the d_state
     d_state.run();

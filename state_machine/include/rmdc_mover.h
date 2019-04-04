@@ -14,6 +14,7 @@
 #include "geometry_msgs/Pose.h"
 #include "nav_msgs/Odometry.h"
 #include "state_machine/control.h"
+#include "std_msgs/String.h"
 #include <math.h>
 
 class rmdc_mover {
@@ -32,6 +33,9 @@ private:
 
     //publisher object
     ros::Publisher pub;
+
+    //publisher for sending confirmation messages
+    ros::Publisher confirmation_publisher;
 
     //subscriber object array
     ros::Subscriber sub[2];

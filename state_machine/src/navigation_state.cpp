@@ -21,108 +21,105 @@ class navigation_state : public rmdc_state {
 //public members of the class
 public:
 
-	//constructor
-	navigation_state() : mover(this -> nh) {}
+    //constructor
+    navigation_state() : mover(this -> nh) {}
 
-	//function that is used to run the main loop of the node
-	virtual void run() {
+    //function that is used to run the main loop of the node
+    virtual void run() {
 
-		//slow down the loop
-		ros::Rate loop_rate(10);
+        //slow down the loop
+        ros::Rate loop_rate(10);
 
-		while(ros::ok()) {
+        while(ros::ok()) {
 
-			//slow down the loop
-			loop_rate.sleep();
+            //slow down the loop
+            loop_rate.sleep();
 
-			//wait for callbacks
-			ros::spinOnce();
+            //wait for callbacks
+            ros::spinOnce();
 
-			//check the distance travelled and publish it
-			this -> check_distance();
+            //check the distance travelled and publish it
+            this -> check_distance();
 
-		}
+        }
 
-	}
+    }
 
-	//function used to initialize the node, subscribe to any topics and set up
-	//publishers
-	virtual void init(int argc, char** argv) {
-
-		//initialize ros with the command line arguments
-        ros::init(argc, argv, "navigation_state");
+    //function used to initialize the node, subscribe to any topics and set up
+    //publishers
+    virtual void init() {
 
         //setup publishers and subscribers
 
         //initialize the control subscriber
         this -> control_subscriber = (this -> nh).subscribe(
-        	"/state_machine/control", 10,
-        	&navigation_state::control_callback, this);
+            "/state_machine/control", 10,
+            &navigation_state::control_callback, this);
 
         //intitialize the distance publisher
         this -> distance_publisher = (this -> nh).advertise<std_msgs::Float32>(
-        	"/state_machine/distance", 0);
+            "/state_machine/distance", 0);
 
-	}
+    }
 
 private:
 
-	//subscribe to control messages
-	ros::Subscriber control_subscriber;
+    //subscribe to control messages
+    ros::Subscriber control_subscriber;
 
-	//publisher to send out distance updates
-	ros::Publisher distance_publisher;
+    //publisher to send out distance updates
+    ros::Publisher distance_publisher;
 
-	//mover object to make the robot move using the rmdc_mover class
-	rmdc_mover mover;
+    //mover object to make the robot move using the rmdc_mover class
+    rmdc_mover mover;
 
-	//distance traveled away from origin
-	double distance;
+    //distance traveled away from origin
+    double distance;
 
-	//check the distance from the origin
-	void check_distance() {
+    //check the distance from the origin
+    void check_distance() {
 
-		//update the distance traveled away from the origin
-		this -> distance = mover.distance_from_origin();
+        //update the distance traveled away from the origin
+        this -> distance = mover.distance_from_origin();
 
-		//publish the distance to the topic
-		std_msgs::Float32 msg;
-		msg.data = this -> distance;
-		this -> distance_publisher.publish(msg);
+        //publish the distance to the topic
+        std_msgs::Float32 msg;
+        msg.data = this -> distance;
+        this -> distance_publisher.publish(msg);
 
-	}
+    }
 
-	//control subscriber callback
-	void control_callback(const state_machine::control& message) {
+    //control subscriber callback
+    void control_callback(const state_machine::control& message) {
 
-		//convert the string par tof th message to a string
-		std::string string_message(message.message);
+        //convert the string par tof th message to a string
+        std::string string_message(message.message);
 
-		//retrieve the number part of the message
-		double number_message = message.num;
+        //retrieve the number part of the message
+        double number_message = message.num;
 
-		//handle the message
-		if (string_message.compare("forward") == 0) {
+        //handle the message
+        if (string_message.compare("forward") == 0) {
 
-			//move the robot forward
-			//this will block this node until its done
-			this -> mover.move_forward();
+            //move the robot forward
+            //this will block this node until its done
+            this -> mover.move_forward();
 
-		} else if(string_message.compare("forward") == 0
-			&& number_message != 0) {
+        } else if(string_message.compare("forward") == 0
+            && number_message != 0) {
 
-			//move the robot forward the specified distance
-			//this will block this node until its done
-			this -> mover.move_forward(number_message);
+            //move the robot forward the specified distance
+            //this will block this node until its done
+            this -> mover.move_forward(number_message);
 
-		} else if(string_message.compare("turn") == 0) {
+        } else if(string_message.compare("turn") == 0) {
 
-			//turn the robot the specified amount
-			//this will block until its finished
-			this -> mover.rotate(number_message);
+            //turn the robot the specified amount
+            //this will block until its finished
+            this -> mover.rotate(number_message);
 
-		}
-	}
+        }
+    }
 
 
 
@@ -131,14 +128,17 @@ private:
 //main function to setup and run the navigation state
 int main(int argc, char** argv) {
 
-	//create a navigation state object
-	navigation_state n_state;
+    //initialize ros with the command line arguments
+    ros::init(argc, argv, "decision_state");
 
-	//initialize the navigation state
-	n_state.init(argc, argv);
+    //create a navigation state object
+    navigation_state n_state;
 
-	//run the navigation state
-	n_state.run();
+    //initialize the navigation state
+    n_state.init();
+
+    //run the navigation state
+    n_state.run();
 
     return(0);
 }
