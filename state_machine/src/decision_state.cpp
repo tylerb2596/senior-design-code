@@ -34,14 +34,14 @@ public:
     //constructor
     decision_state(int how_many) : num_sonars(how_many),
         dump_interval(60), return_to_home_interval(300), radius(10),
-        correcting(false) {
+        correcting(false), returning_home(false), dumping(false) {
             srand(time(NULL));
         }
 
     //constructor
     decision_state(int how_many, double rad) : num_sonars(how_many),
         dump_interval(60), return_to_home_interval(300), radius(rad),
-        correcting(false) {
+        correcting(false), returning_home(false), dumping(false) {
             srand(time(NULL));
         }
 
@@ -137,14 +137,22 @@ private:
     const double radius;
 
     //variable to act as a sort of mutex lock to prevent the sonars from
-    //interruoting an adjustment in progress
+    //interrupting an adjustment in progress
     bool correcting;
+
+    //variable to act as a sort of mutex lock to prevent the sonars from
+    //interrupting an the return home algorithm
+    bool returning_home;
+
+    //variable to act as a sort of mutex lock to prevent the sonars from
+    //interrupting an the dumping algorithm
+    bool dumping;
 
     //callback function for the sonar array
     void sonar_callback(const sensor_msgs::Range& message) {
 
         //if a correction is in progress then dont
-        if (this -> correcting) {
+        if (this -> correcting || this -> returning_home || this -> dumping) {
             return;
         }
 
