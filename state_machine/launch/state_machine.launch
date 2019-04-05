@@ -1,0 +1,19 @@
+<!-- SBD Metallic Debris Collector Project
+Stanley Black and Decker
+Georgia Institute of Technology
+created by Tyler Brown -->
+
+<!-- launch file used to start up the RMDC state_machine nodes -->
+
+<launch>
+	<!-- launch the sonar node -->
+	<node pkg="pi_sonar" name="sonar" type="pi_sonar"/>
+	<!-- launch the user_control node -->
+	<node pkg="state_machine" name="user_control" type="user_control.py"/>
+	<!-- launch the decision state node -->
+	<node pkg="state_machine" name="decision" type="decision_state"/>
+	<!-- launch the navigation state node -->
+	<node pkg="state_machine" name="navigation" type="navigation_state"/>
+	<!-- launch the timer node -->
+	<node pkg="state_machine" name="timer" type="timer"/>
+</launch>
