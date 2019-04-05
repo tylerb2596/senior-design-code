@@ -1,0 +1,96 @@
+body {
+	height: 100%;
+	margin: 0px;
+	background-color: #424242;
+}
+
+.navButtons:focus {
+	outline: none;
+}
+
+.navButtons span {
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  transition: 0.5s;
+}
+
+.navButtons span:after {
+  content: '\00bb';
+  position: absolute;
+  opacity: 0;
+  top: 0;
+  right: -20px;
+  transition: 0.5s;
+}
+
+.navButtons:hover span {
+  padding-right: 25px;
+}
+
+.navButtons:hover span:after {
+  opacity: 1;
+  right: 0;
+}
+
+.titleBarDiv {
+
+	width:100%;
+	background-color: #4286f4;
+	height: 100px;
+	box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.2), 0 0px 0px 0 rgba(0, 0, 0, 0.19);
+  	text-align: center;
+  	margin: auto;
+  	display: flex;
+  	z-index: 1;
+  	position: relative;
+}
+
+.titleTextDiv {
+
+	width: 75%;
+	padding-top: 1.25%;
+}
+
+h.titleBarText {
+	font-size: 50px;
+	font-family: 'Trebuchet MS';
+	font-weight: bold;
+	color: lightgray;
+	padding-left: 8%;
+	padding-right: 20%
+	width: 100%;
+}
+
+.titleImage {
+	width: 20%;
+	height: 100%;
+	padding-right: 2%;
+}
+
+.navButtons {
+	border: 0px;
+	background-color: #4286f4;
+	color: white;
+	height: 100%;
+	z-index: 0;
+	text-align: center;
+	margin: auto;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.btnDiv {
+	margin: auto;
+}
+
+.borderDiv {
+	margin: auto;
+	border-style: solid;
+	border-color: #616161;
+	border-bottom: 0px;
+	border-top: 0px;
+	border-width: thin;
+	height: 40px;
+
+}
