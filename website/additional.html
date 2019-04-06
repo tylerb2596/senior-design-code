@@ -1,0 +1,128 @@
+<!-- ECE 4012 Team sp19d24 website -->
+
+<!-- SBD Metallic Debris Collector Project
+Stanley Black and Decker
+Georgia Institute of Technology
+created by Tyler Brown -->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- link this HTML document to styles.css -->
+        <link rel="stylesheet" type ="text/css" href="styles.css"/>
+    </head>
+    <body>
+        <!-- this div is for the entire document -->
+        <div id="contentDiv">
+        <!-- This div contains the title bar for the website -->
+            <div class="titleBarDiv">
+                <!-- this div contains the title this is just in case
+                    we want to put  more content on the title bar-->
+                <!-- image div for gatech logo -->
+                <div class="titleImage">
+                    <a href="https://www.gatech.edu/">
+                        <picture>
+                            <source srcset="pics/gatech2_2.png" media="(max-width: 600px)">
+                            <source srcset="pics/gatech.png" media="(max-width: 1500px)">
+                            <img class="titleImage" src="pics/gatech.png" alt="Georgia Institute of Technology Logo"
+                            style="height: 75%; width: 90%; margin: auto; padding: 0.80vw;">
+                        </picture>
+                    </a>
+                </div>
+                <div class="titleTextDiv">
+                    <!-- title bar text -->
+                    <h class="titleBarText">
+                        SBD: Robotic Metallic Debris Collector
+                    </h>
+                </div>
+            </div>
+            <div id="navigationBar">
+                <span id="buttonDiv" style="display: flex; position: relative;
+                background-color: #4286f4; padding: 0.6%">
+                     <div class="btnDiv">
+                        <button class="navButtons" name="aboutBtn" type="button"
+                        onclick="location.href='index.html';">
+                            <span>
+                                About Our Project
+                            </span>
+                    </button>
+                    </div>
+                    <div class="borderDiv"></div>
+                    <div class="btnDiv">
+                        <button class="navButtons" name="aboutSBDBtn" type="button">
+                            <span>
+                                About SBD
+                            </span>
+                        </button>
+                    </div>
+                    <div class="borderDiv"></div>
+                    <div class="btnDiv">
+                        <button class="navButtons" name="trPapersBtn" type="button"
+                        onclick="location.href='TRP.html';">
+                            <span>
+                                Technical Review Papers
+                            </span>
+                        </button>
+                    </div>
+                    <div class="borderDiv"></div>
+                    <div class="btnDiv">
+                        <button class="navButtons" name="proposalBtn" type="button"
+                        onclick="location.href='proposal.html';">
+                            <span>
+                                Proposal Content
+                            </span>
+                        </button>
+                    </div>
+                    <div class="borderDiv"></div>
+                    <div class="btnDiv">
+                        <button class="navButtons" name="additionalBtn" type="button"
+                        onclick="location.href='additional.html';">
+                            <span>
+                                Additional Documentation
+                            </span>
+                        </button>
+                    </div>
+                </span>
+            </div>
+            <!-- this div contains the content for this page -->
+            <div class="contentDiv">
+                <div class="titleDiv">
+                    <span class="titleSpan">
+                        <h1 class="contentTitle">Additional Documentation</h1>
+                    </span>
+                </div>
+                <!-- This div contains the paragraph describing our project -->
+                <div class="paraDiv">
+                    <div class="subtitleDiv">
+                        <h3 class="paraSubtitle">
+                            <u>GitHub</u>
+                        </h3>
+                    </div>
+                    <div class="contentParaDiv">
+                        <p class="contentPara">
+                                One of the most popular ways to keep track of software code versions and
+                            revisions is with the use of the code tracking servers available freely at
+                            <a href="https://github.com/" style="text-decoration: none; color: darkblue">github.com</a>.
+                            For our project we have used this free resource to keep track of all of our code.
+                            A link to our GitHub repository is included below:
+                        </p>
+                    </div>
+                    <div class="githubDiv" style="text-align: center;">
+                        <a href="https://github.com/tylerb2596/senior-design-code">
+                            <img class="gitImage" src="pics/Octocat.png" alt="Octocat (link to our code)"
+                            style="height: 25%; width: 25%; margin: auto; padding: 3vw; padding-bottom: 1vw">
+                        </a>
+                    </div>
+                    <div class="githubLogoDiv" style="text-align: center;">
+                         <a href="https://github.com/">
+                            <img class="gitImage" src="pics/GitHub_Logo.png" alt="GitHub Logo"
+                            style="height: 25%; width: 25%; margin: auto; padding: 3vw; padding-top: 1vw; padding-bottom: 1vw">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,11 +1,18 @@
+/* ECE 4012 Team sp19d24 website
+
+SBD Metallic Debris Collector Project
+Stanley Black and Decker
+Georgia Institute of Technology
+created by Tyler Brown*/
+
 body {
-	height: 100%;
-	margin: 0px;
-	background-color: #424242;
+    height: 100%;
+    margin: 0px;
+    background-color: #424242;
 }
 
 .navButtons:focus {
-	outline: none;
+    outline: none;
 }
 
 .navButtons span {
@@ -35,62 +42,179 @@ body {
 
 .titleBarDiv {
 
-	width:100%;
-	background-color: #4286f4;
-	height: 100px;
-	box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.2), 0 0px 0px 0 rgba(0, 0, 0, 0.19);
-  	text-align: center;
-  	margin: auto;
-  	display: flex;
-  	z-index: 1;
-  	position: relative;
+    width: 100%;
+    background-color: #4286f4;
+    height: 100px;
+    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.2), 0 0px 0px 0 rgba(0, 0, 0, 0.19);
+    text-align: center;
+    margin: auto;
+    display: flex;
+    z-index: 1;
+    position: relative;
 }
 
 .titleTextDiv {
 
-	width: 75%;
-	padding-top: 1.25%;
+    width: 70vw;
+    padding-top: 1.25%;
+    height:100%;
 }
 
 h.titleBarText {
-	font-size: 50px;
-	font-family: 'Trebuchet MS';
-	font-weight: bold;
-	color: lightgray;
-	padding-left: 8%;
-	padding-right: 20%
-	width: 100%;
+    font-size: 3.5vw;
+    font-family: 'Trebuchet MS';
+    font-weight: bold;
+    color: lightgray;
+    padding-left: 8%;
+    width: 100%;
+    position: relative;
 }
 
 .titleImage {
-	width: 20%;
-	height: 100%;
-	padding-right: 2%;
+    width: 24vw;
+    height: 100%;
+    padding-right: 2%;
 }
 
 .navButtons {
-	border: 0px;
-	background-color: #4286f4;
-	color: white;
-	height: 100%;
-	z-index: 0;
-	text-align: center;
-	margin: auto;
-	white-space: nowrap;
-	overflow: hidden;
+    border: 0px;
+    background-color: #4286f4;
+    color: white;
+    height: 100%;
+    z-index: 0;
+    text-align: center;
+    margin: auto;
+    overflow: hidden;
 }
 
 .btnDiv {
-	margin: auto;
+    margin: auto;
 }
 
 .borderDiv {
-	margin: auto;
-	border-style: solid;
-	border-color: #616161;
-	border-bottom: 0px;
-	border-top: 0px;
-	border-width: thin;
-	height: 40px;
+    margin: auto;
+    border-style: solid;
+    border-color: #616161;
+    border-bottom: 0px;
+    border-top: 0px;
+    border-width: thin;
+    height: 40px;
 
+}
+
+.titleDiv {
+
+    background-color: grey;
+    width: 75%;
+    margin: auto;
+    text-align: center;
+}
+
+.contentTitle {
+    color: white;
+    font-family: 'Trebuchet MS';
+    font-weight: bold;
+    font-size: 3vw;
+}
+
+.paraDiv {
+    background-color: white;
+    opacity: 0.75;
+    width: 75%;
+    margin: auto;
+    text-align: left;
+}
+
+.subtitleDiv {
+    background-color: white;
+    opacity: 0.75;
+    width: 90%;
+    margin: auto;
+    text-align: left;
+    padding-left: 0.25vw;
+    padding-top: 0.25vw;
+}
+
+.contentParaDiv {
+
+    width: 85%;
+    text-align: left;
+    margin: auto;
+    text-indent: 5%;
+
+}
+
+p {
+    margin-top: 1%;
+    margin-bottom: 1%;
+}
+
+.trpRowDiv {
+    display: flex;
+    padding-bottom: 3vw;
+}
+
+.trpPaperDiv {
+    height: 100%;
+    flex: 50%;
+    text-align: center;
+}
+
+embed {
+    margin: auto;
+    padding: 3vw;
+    padding-bottom: 1vw;
+    height: 30vw;
+}
+/*styles that apply specifically to smaller screens*/
+
+@media only screen and (max-width : 600px) {
+    .titleImage {
+        padding: 0.5vw;
+    }
+
+    .titleBarDiv {
+        width: 100%;
+        background-color: #4286f4;
+        height: 20vw;
+        box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.2), 0 0px 0px 0 rgba(0, 0, 0, 0.19);
+        text-align: center;
+        margin: auto;
+        display: flex;
+        z-index: 1;
+        position: relative;
+    }
+
+    .titleTextDiv {
+        width: 70vw;
+        padding-top: 5vw;
+        height:100%;
+    }
+
+    h.titleBarText {
+        font-size: 5vw;
+        font-family: 'Trebuchet MS';
+        font-weight: bold;
+        color: lightgray;
+        padding-left: 8%;
+        width: 100%;
+        position: relative;
+    }
+
+    embed {
+        visibility: hidden;
+        display: none;
+    }
+
+    .trpPaperDiv {
+        height: 20%;
+        flex: 50%;
+        text-align: -webkit-center;
+        padding: 5vw;
+    }
+
+    .trpRowDiv {
+        display: flex;
+        padding-bottom: 2vw;
+    }
 }
