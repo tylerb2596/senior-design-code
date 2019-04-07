@@ -34,14 +34,16 @@ public:
     //constructor
     decision_state(int how_many) : num_sonars(how_many),
         dump_interval(60), return_to_home_interval(300), radius(10),
-        correcting(false), returning_home(false), dumping(false) {
+        correcting(false), returning_home(false), dumping(false),
+        user_stopped(true) {
             srand(time(NULL));
         }
 
     //constructor
     decision_state(int how_many, double rad) : num_sonars(how_many),
         dump_interval(60), return_to_home_interval(300), radius(rad),
-        correcting(false), returning_home(false), dumping(false) {
+        correcting(false), returning_home(false), dumping(false),
+        user_stopped(true){
             srand(time(NULL));
         }
 
@@ -55,6 +57,9 @@ public:
 
             std::string temp_string = "/pi_sonar/sonar_";
             temp_string.append(std::string(std::to_string(i)));
+
+            std::cout << temp_string << std::endl;
+
 
             this -> sonar_subscribers.push_back(
                 (this -> nh).subscribe(temp_string.c_str(), 10,
@@ -78,7 +83,7 @@ public:
 
         //subscribe to confirmation messages
         this -> confirmation_subscriber = (this -> nh).subscribe(
-            "/state_machine/distance", 10,
+            "/state_machine/confirmation", 10,
             &decision_state::confirmation_callback, this);
 
         //set up the publisher to send control messages
@@ -90,7 +95,7 @@ public:
     virtual void run () {
 
         //slow down the loop
-        ros::Rate loop_rate(10);
+        ros::Rate loop_rate(100);
 
         while(ros::ok()) {
 
@@ -148,11 +153,15 @@ private:
     //interrupting an the dumping algorithm
     bool dumping;
 
+    //variable so the robot can know when it has been stopped by the user
+    bool user_stopped;
+
     //callback function for the sonar array
     void sonar_callback(const sensor_msgs::Range& message) {
 
         //if a correction is in progress then dont
-        if (this -> correcting || this -> returning_home || this -> dumping) {
+        if (this -> user_stopped || this -> correcting || this -> dumping
+            || this -> returning_home) {
             return;
         }
 
@@ -166,10 +175,10 @@ private:
             case 0:
 
                 //sonar on the right side of the robot
-                //if it gets too close to something turn 15 degrees
-                if (message.range <= 1 && message.range > 0.2) {
+                //if it gets too close to something turn 30 degrees
+                if (message.range <= 0.75 && message.range > 0.2) {
 
-                    this -> sonar_adjustment(15);
+                    this -> sonar_adjustment(30);
 
                 }
 
@@ -179,9 +188,9 @@ private:
 
                 //sonar on the front of the robot facing 45 degrees to the
                 //robots left
-                //if something gets too close then turn between 90 and 270
+                //if something gets too close then turn between 50 and 270
                 //degrees
-                if (message.range <= 1 && message.range > 0.2) {
+                if (message.range <= 0.75 && message.range > 0.2) {
 
                     this -> sonar_adjustment(this -> determine_random_angle());
 
@@ -193,9 +202,9 @@ private:
 
                 //sonar on the front of the robot facing 45 degrees to the
                 //robots right
-                //if something gets too close then turn between 90 and 270
+                //if something gets too close then turn between 50 and 270
                 //degrees
-                if (message.range <= 1 && message.range > 0.2) {
+                if (message.range <= 0.75 && message.range > 0.2) {
 
                     this -> sonar_adjustment(this -> determine_random_angle());
 
@@ -207,8 +216,8 @@ private:
 
                 //sonar on the front of the robot
                 //if it gets too close to something turn to a random angle
-                //between 90 and 270 degrees
-                if(message.range <= 1 && message.range > 0.2) {
+                //between 50 and 270 degrees
+                if(message.range <= 0.75 && message.range > 0.2) {
 
                     this -> sonar_adjustment(this -> determine_random_angle());
 
@@ -221,9 +230,9 @@ private:
                 //sonar on the left side of the robot
                 //if it gets too close to something turn to an angle between 180
                 //and 270 degrees
-                if(message.range <= 1 && message.range > 0.2) {
+                if(message.range <= 0.75 && message.range > 0.2) {
 
-                    this -> sonar_adjustment((rand() % 90) + 180);
+                    this -> sonar_adjustment(((rand() % 9) + 18) * 10);
 
                 }
 
@@ -242,17 +251,18 @@ private:
         //convert the message to a string
         std::string string_message(message.data);
 
-        //create the message to send to the control topic
-        state_machine::control msg;
-
         //determine the correct message to send
         if (string_message.compare("stop") == 0) {
 
             this -> start_stop_message("stop");
+            this -> user_stopped = true;
+            this -> correcting = false;
 
         } else if(string_message.compare("start") ==0) {
 
             this -> start_stop_message("start");
+            this -> forward_message();
+            this -> user_stopped = false;
         }
 
     }
@@ -292,11 +302,13 @@ private:
         }
     }
 
-    //generate a random angle to turn to between 90 and 270
+    //generate a random angle to turn to between 50 and 270
+    //in multiples of 10
     int determine_random_angle() {
 
         //generate the number using rand and return it
-        return (rand() % 80) + 190;
+        int rand_num = (rand() % 22) + 5;
+        return rand_num * 10;
 
     }
 
@@ -313,11 +325,15 @@ private:
         //send the message
         this -> decision_publisher.publish(msg);
 
+        //wait for a half second to ensure the message is executed
+        while (this -> correcting) {
+            ros::spinOnce();
+        }
 
     }
 
     //function to make sending a forward messafe easier
-    void forward_message(int how_far = 0) {
+    void forward_message(double how_far = 0) {
 
         //make a message
         state_machine::control msg;
@@ -328,6 +344,9 @@ private:
 
         //send the message
         this -> decision_publisher.publish(msg);
+
+        //wait for a half second to ensure the message is executed
+        ros::Duration(1).sleep();
     }
 
     //function to make sending start/stop messages easier
@@ -342,6 +361,9 @@ private:
 
         //send the message
         this -> decision_publisher.publish(msg);
+
+        //wait for a second to ensure the message is executed
+        ros::Duration(1).sleep();
     }
 
     //function to abstract out sonar adjustment code

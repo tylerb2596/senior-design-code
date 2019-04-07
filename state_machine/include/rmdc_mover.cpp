@@ -14,7 +14,7 @@
 
 //make the rmdc_move object
 rmdc_mover::rmdc_mover(const ros::NodeHandle & nh) : node(nh),
-max_rotation_speed(M_PI/8), forward_speed(0.4), stop(false) {
+max_rotation_speed(M_PI/8), forward_speed(0.3), stop(true) {
 
     //subscribe to topic sending out odometry messages
     this -> sub[0] = node.subscribe("odom", 1,
@@ -125,13 +125,13 @@ void rmdc_mover::rotate(double angle) {
 
     }
 
-    //send confirmation
+     //send confirmation
     std_msgs::String con_message;
     con_message.data = "turn";
     this -> confirmation_publisher.publish(con_message);
 
-    //make sure to wait 2 seconds before doing anything else
-    ros::Duration(2).sleep();
+    //make sure to wait 1 second before doing anything else
+    ros::Duration(1).sleep();
 }
 
 //functions to make the robot move forward a specified distance in meters
@@ -180,8 +180,8 @@ void rmdc_mover::move_forward(double distance_to_move) {
 
     }
 
-    //make sure to wait 2 seconds before doing anything else
-    ros::Duration(2).sleep();
+    //make sure to wait 1 second before doing anything else
+    ros::Duration(1).sleep();
 }
 
 
@@ -216,8 +216,8 @@ void rmdc_mover::move_forward() {
         ros::spinOnce();
     }
 
-    //make sure to wait 2 seconds before doing anything else
-    ros::Duration(2).sleep();
+    //make sure to wait  second before doing anything else
+    ros::Duration(1).sleep();
 
 }
 

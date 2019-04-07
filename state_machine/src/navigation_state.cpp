@@ -28,7 +28,7 @@ public:
     virtual void run() {
 
         //slow down the loop
-        ros::Rate loop_rate(10);
+        ros::Rate loop_rate(100);
 
         while(ros::ok()) {
 
