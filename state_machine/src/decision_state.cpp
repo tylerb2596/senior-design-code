@@ -16,7 +16,6 @@
 #include "std_msgs/String.h"
 #include "std_msgs/Int16.h"
 #include "std_msgs/Float32.h"
-#include "sensor_msgs/Range.h"
 #include "../include/rmdc_state.h"
 #include <string>
 #include <iostream>
@@ -52,20 +51,9 @@ public:
 
         //setup publisher and subscriber
 
-        //subscribe to sonar messages based on the number of sonars used
-        for(int i = 0; i < this -> num_sonars; ++i) {
-
-            std::string temp_string = "/pi_sonar/sonar_";
-            temp_string.append(std::string(std::to_string(i)));
-
-            std::cout << temp_string << std::endl;
-
-
-            this -> sonar_subscribers.push_back(
-                (this -> nh).subscribe(temp_string.c_str(), 10,
-                    &decision_state::sonar_callback, this));
-
-        }
+        //subscribe to the sonar_handler node messages
+        this -> sonar_subscriber = (this -> nh). subscribe (
+            "/state_machine/sonar", 10, &decision_state::sonar_callback, this);
 
         //subscribe to timer messages
         this -> timer_subscriber = (this -> nh).subscribe(
@@ -115,7 +103,8 @@ private:
     const int return_to_home_interval;
 
     //subscribe to sonar messages
-    std::vector<ros::Subscriber> sonar_subscribers;
+    // std::vector<ros::Subscriber> sonar_subscribers;
+    ros::Subscriber sonar_subscriber;
 
     //subscribe to timer messages
     ros::Subscriber timer_subscriber;
@@ -157,92 +146,85 @@ private:
     bool user_stopped;
 
     //callback function for the sonar array
-    void sonar_callback(const sensor_msgs::Range& message) {
+    void sonar_callback(const std_msgs::Float32& message) {
 
         //if a correction is in progress then dont
         if (this -> user_stopped || this -> correcting || this -> dumping
             || this -> returning_home) {
             return;
-        }
+        } else {
 
-        //first get the frame_id of sonar that this message is from
-        std::string frame_id = message.header.frame_id;
-
-        int sonar_num = std::atoi(frame_id.substr(6, 1).c_str());
-
-        //now switch on the sonar_num
-        switch(sonar_num) {
-            case 0:
-
-                //sonar on the right side of the robot
-                //if it gets too close to something turn 30 degrees
-                if (message.range <= 0.75 && message.range > 0.2) {
-
-                    this -> sonar_adjustment(30);
-
-                }
-
-                break;
-
-            case 1:
-
-                //sonar on the front of the robot facing 45 degrees to the
-                //robots left
-                //if something gets too close then turn between 50 and 270
-                //degrees
-                if (message.range <= 0.75 && message.range > 0.2) {
-
-                    this -> sonar_adjustment(this -> determine_random_angle());
-
-                }
-
-                break;
-
-            case 2:
-
-                //sonar on the front of the robot facing 45 degrees to the
-                //robots right
-                //if something gets too close then turn between 50 and 270
-                //degrees
-                if (message.range <= 0.75 && message.range > 0.2) {
-
-                    this -> sonar_adjustment(this -> determine_random_angle());
-
-                }
-
-                break;
-
-            case 3:
-
-                //sonar on the front of the robot
-                //if it gets too close to something turn to a random angle
-                //between 50 and 270 degrees
-                if(message.range <= 0.75 && message.range > 0.2) {
-
-                    this -> sonar_adjustment(this -> determine_random_angle());
-
-                }
-
-                break;
-
-            case 4:
-
-                //sonar on the left side of the robot
-                //if it gets too close to something turn to an angle between 180
-                //and 270 degrees
-                if(message.range <= 0.75 && message.range > 0.2) {
-
-                    this -> sonar_adjustment(((rand() % 9) + 18) * 10);
-
-                }
-
-                break;
+            this -> sonar_adjustment(message.data);
         }
     }
 
     //callback function for timer interrupts
     void timer_callback(const std_msgs::Int16& message) {
         this -> elapsed_time = message.data;
+
+        state_machine::control msg;
+        msg.message = "home";
+        msg.num = 0;
+
+        //if the algorithm is finished send a message to return home and
+        //wait to start over again
+        if (this -> elapsed_time >= this -> return_to_home_interval) {
+
+            //avoid sonar interrupts
+            this -> returning_home = true;
+            //dont let the movement API to interfere
+            this -> start_stop_message("stop");
+            //when done dont let the sonars affect anything
+            this -> user_stopped = true;
+            //tell the robot to return home
+            this -> decision_publisher.publish(msg);
+
+            //slow down the loop
+            ros::Rate loop_rate(10);
+
+            //wait until the robot is home
+            while(this -> returning_home) {
+                loop_rate.sleep();
+                ros::spinOnce();
+            }
+
+            //tell the robot to dump its load
+            msg.message = "drop";
+            this -> decision_publisher.publish(msg);
+            this -> dumping = true;
+
+        } else if (this -> elapsed_time >= this -> dump_interval) {
+
+            //avoid sonar interrupts
+            this -> returning_home = true;
+            //dont let the movement API to interfere
+            this -> start_stop_message("stop");
+            //tell the robot to go home
+            this -> decision_publisher.publish(msg);
+
+            //slow down the loop
+            ros::Rate loop_rate(10);
+
+            //wait until the robot is home
+            while(this -> returning_home) {
+                loop_rate.sleep();
+                ros::spinOnce();
+            }
+
+            //tell the robot to dump its load
+            msg.message = "drop";
+            this -> decision_publisher.publish(msg);
+            this -> dumping = true;
+
+            //wait until the robot has dumped its load
+            while(this -> dumping) {
+                loop_rate.sleep();
+                ros::spinOnce();
+            }
+
+            this -> start_stop_message("start");
+
+        }
     }
 
     //callback function for the user_control messages
@@ -274,9 +256,12 @@ private:
         double distance_traveled = message.data;
 
         //make sure the robot stays within the given radius
-        if (distance_traveled > this -> radius) {
+        if (distance_traveled >= this -> radius) {
 
             //first stop the robot
+            this -> start_stop_message("stop");
+
+            //next start the robot again
             this -> start_stop_message("start");
 
             //determine a random angle to turn to and turn that way
@@ -295,9 +280,19 @@ private:
         std::string con_message(message.data);
 
         //if the message is turn then we are done correcting
+        //if it is home then we have returned home
+        //if it is drop then we are done dumping the load
         if (con_message.compare("turn") == 0) {
 
             this -> correcting = false;
+
+        } else if (con_message.compare("home") == 0) {
+
+            this -> returning_home = false;
+
+        } else if (con_message.compare("drop") == 0) {
+
+            this -> dumping = false;
 
         }
     }

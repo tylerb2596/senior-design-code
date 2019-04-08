@@ -52,8 +52,6 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
     FILES
     control.msg
-#   Message1.msg
-#   Message2.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -204,8 +202,10 @@ add_library(mover
 add_executable(decision_state src/decision_state.cpp)
 add_executable(timer src/timer.cpp)
 add_executable(navigation_state src/navigation_state.cpp)
+add_executable(sonar_handler src/sonar_handler.cpp)
 target_link_libraries(timer ${catkin_LIBRARIES})
 target_link_libraries(navigation_state ${catkin_LIBRARIES})
 target_link_libraries(decision_state ${catkin_LIBRARIES})
+target_link_libraries(sonar_handler ${catkin_LIBRARIES})
 target_link_libraries(navigation_state PRIVATE mover)
 add_dependencies(decision_state state_machine_generate_messages_cpp)

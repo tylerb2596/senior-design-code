@@ -8,6 +8,8 @@ created by Tyler Brown -->
 <launch>
 	<!-- launch the sonar node -->
 	<include file="$(find pi_sonar)/launch/ubiquity_sonar.launch"/>
+	<!-- launch the sonar handler node -->
+	<node pkg="state_machine" name="sonar" type="sonar_handler"/>
 	<!-- launch the user_control node -->
 	<node pkg="state_machine" name="user_control" type="user_control.py"/>
 	<!-- launch the decision state node -->
