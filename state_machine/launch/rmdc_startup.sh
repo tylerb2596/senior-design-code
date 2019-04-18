@@ -9,5 +9,5 @@
 #files to start the algorithm
 
 #we can also start other packages in here if we need to
-
+rosservice call /fiducial_slam/clear_map
 roslaunch state_machine state_machine.launch

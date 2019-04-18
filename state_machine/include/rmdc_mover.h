@@ -55,6 +55,7 @@ private:
     //origin locations
     double x_origin;
     double y_origin;
+    double origin_orientation;
 
     //current covariance for the positions
     double current_x_covariance;
@@ -86,6 +87,12 @@ private:
 
     //private function to make current_orientation settle
     void settle();
+
+    //private function to orient towards the initial orientation
+    void original_orientation();
+
+    //function to move the desired angle in return to home
+    void return_home();
 
 //public member functions
 public:

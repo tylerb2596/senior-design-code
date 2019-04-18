@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
 		"/state_machine/timer", 0);
 
 	//slow down the loop
-	ros::Rate loop_rate(100);
+	ros::Rate loop_rate(10);
 
 	//get the start time
 	start_time = std::chrono::high_resolution_clock::now();

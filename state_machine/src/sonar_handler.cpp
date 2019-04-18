@@ -25,7 +25,7 @@ class sonar_handler : public rmdc_state {
 public:
 
     //constructor
-    sonar_handler() : threshold(0.75) {
+    sonar_handler() : threshold(1.00) {
 
         for(int i = 0; i < 5; ++i) {
             (this -> previous_sonar)[i] = 0;
@@ -65,19 +65,19 @@ public:
 
         //subscribe to each of the sonar topics
         this -> sonar0_subscriber = (this -> nh).subscribe(
-            "/pi_sonar/sonar_0", 10, &sonar_handler::sonar_callback_0, this);
+            "/pi_sonar/sonar_0", 0, &sonar_handler::sonar_callback_0, this);
 
         this -> sonar1_subscriber = (this -> nh).subscribe(
-            "/pi_sonar/sonar_1", 10, &sonar_handler::sonar_callback_1, this);
+            "/pi_sonar/sonar_1", 0, &sonar_handler::sonar_callback_1, this);
 
         this -> sonar2_subscriber = (this -> nh).subscribe(
-            "/pi_sonar/sonar_2", 10, &sonar_handler::sonar_callback_2, this);
+            "/pi_sonar/sonar_2", 0, &sonar_handler::sonar_callback_2, this);
 
         this -> sonar3_subscriber = (this -> nh).subscribe(
-            "/pi_sonar/sonar_3", 10, &sonar_handler::sonar_callback_3, this);
+            "/pi_sonar/sonar_3", 0, &sonar_handler::sonar_callback_3, this);
 
         this -> sonar4_subscriber = (this -> nh).subscribe(
-            "/pi_sonar/sonar_4", 10, &sonar_handler::sonar_callback_4, this);
+            "/pi_sonar/sonar_4", 0, &sonar_handler::sonar_callback_4, this);
 
         //publish to a topic to be read by the decision state
         this -> sonar_decision_publisher = (this -> nh).
@@ -171,6 +171,14 @@ private:
     void is_below_threshold() {
 
         for(int i = 0; i < 5; ++i) {
+            if (i == 0 || i == 4) {
+                if((this -> current_sonar)[i] < 0.75 && (this -> current_sonar)[i] > 0.2) {
+                (this -> within_threshold)[i] = true;
+                } else {
+                    (this -> within_threshold)[i] = false;
+                }
+                continue;
+            }
             if((this -> current_sonar)[i] < this -> threshold && (this -> current_sonar)[i] > 0.2) {
                 (this -> within_threshold)[i] = true;
             } else {

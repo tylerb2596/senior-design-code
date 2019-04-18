@@ -9,12 +9,13 @@
 #include "rmdc_mover.h"
 #include <iostream>
 #include <string>
+#include <chrono>
 
 //public members
 
 //make the rmdc_move object
 rmdc_mover::rmdc_mover(const ros::NodeHandle & nh) : node(nh),
-max_rotation_speed(M_PI/8), forward_speed(0.3), stop(true) {
+max_rotation_speed(M_PI/2), forward_speed(0.3), stop(true) {
 
     //subscribe to topic sending out odometry messages
     this -> sub[0] = node.subscribe("odom", 1,
@@ -47,6 +48,9 @@ max_rotation_speed(M_PI/8), forward_speed(0.3), stop(true) {
     //set the covariance to 0.2 at first
     this -> current_orientation_covariance = 0.2;
 
+    //save the initial position/orientation
+    this -> reset();
+
 }
 
 //function to reset the origin of the robot
@@ -58,6 +62,117 @@ void rmdc_mover::reset() {
     //set the origin to the current location
     this -> x_origin = this -> x_position;
     this -> y_origin = this -> y_position;
+    this -> origin_orientation = this -> current_orientation;
+
+}
+
+//function to face initial orientation
+void rmdc_mover::original_orientation() {
+
+    //send turn messages until within range of the desired orientation
+    geometry_msgs::Twist msg;
+
+    this -> lin.x = 0.0;
+    this -> lin.y = 0.0;
+    this -> lin.z = 0.0;
+
+    this -> ang.z = M_PI/8;
+    this -> ang.y = 0.0;
+    this -> ang.x = 0.0;
+
+    msg.linear = this -> lin;
+    msg.angular = this -> ang;
+
+    ros::Rate loop_rate(10);
+
+    while(ros::ok() && std::abs(this -> current_orientation -
+        this -> origin_orientation) > M_PI ) {
+
+        ROS_INFO("%f", this -> current_orientation);
+        ROS_INFO("%f", this -> origin_orientation);
+
+        pub.publish(msg);
+
+        loop_rate.sleep();
+
+        this -> settle();
+    }
+
+    ros::Duration(2).sleep();
+}
+
+//function to turn the desired angle
+void rmdc_mover::return_home() {
+
+    this -> original_orientation();
+
+    //angle we want to cover
+    double desired_angle;
+
+    if (this -> x_origin >= 0 && this -> y_origin >= 0) {
+
+        desired_angle = (360 - (180 - tan(this -> y_origin / this -> x_origin)));
+
+    } else if(this -> x_origin >= 0 && this -> y_origin < 0) {
+
+        desired_angle = ((180 - tan(this -> y_origin / this -> x_origin)));
+
+    } else if(this -> x_origin < 0 && this -> y_origin >= 0) {
+
+        desired_angle = (360 - tan(this -> y_origin / this -> x_origin));
+
+    } else {
+
+        desired_angle = (tan(this -> y_origin / this -> x_origin));
+
+    }
+
+    geometry_msgs::Twist msg;
+
+    this -> lin.x = 0.0;
+    this -> lin.y = 0.0;
+    this -> lin.z = 0.0;
+
+    this -> ang.z = M_PI/8;
+    this -> ang.y = 0.0;
+    this -> ang.x = 0.0;
+
+    msg.linear = this -> lin;
+    msg.angular = this -> ang;
+
+    ros::Rate loop_rate(10);
+
+    //elapsed time since the interval started
+    std::chrono::duration<double> elapsed_time;
+
+    //start time variable
+    std::chrono::high_resolution_clock::time_point start_time;
+    //get the start time
+    start_time = std::chrono::high_resolution_clock::now();
+
+    ROS_INFO("Returning home");
+
+    while(ros::ok() && elapsed_time.count() < desired_angle*(8/M_PI)) {
+
+        pub.publish(msg);
+
+        loop_rate.sleep();
+
+        elapsed_time = start_time - std::chrono::high_resolution_clock::now();
+
+        this -> settle();
+
+    }
+
+    this -> move_forward(this -> distance(this -> x_position,
+        this -> y_position, this -> x_origin, this -> y_origin));
+
+    //send confirmation
+    std_msgs::String con_message;
+    con_message.data = "return_done";
+    this -> confirmation_publisher.publish(con_message);
+
+    ROS_INFO("home");
 
 }
 
@@ -80,50 +195,81 @@ void rmdc_mover::rotate(double angle) {
     //find out how many radians we need to rotate
     double rad_angle = this -> degs_to_rads(angle);
 
-    //determine goal angle to reach
-    double goal_angle = this -> current_orientation + rad_angle;
+    //determine number of messages
+    double num_messages = (int)(rad_angle / this -> max_rotation_speed);
 
-    double tolerance = std::abs(goal_angle - 2*M_PI) < 0.2 ?
-        std::abs(goal_angle - 2*M_PI) : 0.2;
+    //send messages at rate of 100 hz
+    ros::Rate loop_rate(1000);
 
     //make a message to send
     geometry_msgs::Twist msg;
-
-    //set the zero values
     this -> lin.x = 0.0;
     this -> lin.y = 0.0;
     this -> lin.z = 0.0;
-
-    this -> ang.x = 0.0;
+    this -> ang.x = -0.1;
     this -> ang.y = 0.0;
+    this -> ang.z = this -> max_rotation_speed;
+    msg.linear = this -> lin;
+    msg.angular = this -> ang;
 
-    //slow down the loop
-    ros::Rate loop_rate(5);
+    while(ros::ok() && !(this -> stop) && num_messages != 0) {
 
-    //correct for the angular periodicity
-    goal_angle = goal_angle > 2*M_PI ? goal_angle - 2*M_PI : goal_angle;
-
-    while (rad_angle > tolerance && ros::ok()
-        && !(this -> stop)) {
-
-        if (rad_angle > this -> max_rotation_speed) {
-            this -> ang.z = max_rotation_speed;
-            msg.angular = this -> ang;
-            msg.linear = this -> lin;
-            pub.publish(msg);
-        } else {
-            this -> ang.z = rad_angle;
-            msg.angular = this -> ang;
-            msg.linear = this -> lin;
-            pub.publish(msg);
-        }
+        pub.publish(msg);
 
         loop_rate.sleep();
-        this -> settle();
 
-        rad_angle = std::abs(goal_angle - this -> current_orientation);
-
+        num_messages--;
     }
+
+    this -> settle();
+
+
+    // //determine goal angle to reach
+    // double goal_angle = this -> current_orientation + rad_angle;
+
+    // double tolerance = std::abs(goal_angle - 2*M_PI) < 0.5 ?
+    //     std::abs(goal_angle - 2*M_PI) : 0.5;
+
+    // //make a message to send
+    // geometry_msgs::Twist msg;
+
+    // //set the zero values
+    // this -> lin.x = 0.0;
+    // this -> lin.y = 0.0;
+    // this -> lin.z = 0.0;
+
+    // this -> ang.x = 0.0;
+    // this -> ang.y = 0.0;
+
+    // //slow down the loop
+    // ros::Rate loop_rate(5);
+
+    // //correct for the angular periodicity
+    // goal_angle = goal_angle > 2*M_PI ? goal_angle - 2*M_PI : goal_angle;
+
+    // while (rad_angle > tolerance && ros::ok()
+    //     && !(this -> stop)) {
+
+    //     if (rad_angle > this -> max_rotation_speed) {
+    //         this -> ang.z = max_rotation_speed;
+    //         msg.angular = this -> ang;
+    //         msg.linear = this -> lin;
+    //         pub.publish(msg);
+    //     } else {
+    //         this -> ang.z = rad_angle;
+    //         msg.angular = this -> ang;
+    //         msg.linear = this -> lin;
+    //         pub.publish(msg);
+    //     }
+
+    //     loop_rate.sleep();
+    //     this -> settle();
+
+    //     rad_angle = std::abs(goal_angle - this -> current_orientation);
+
+    // }
+
+
 
      //send confirmation
     std_msgs::String con_message;
@@ -226,7 +372,7 @@ void rmdc_mover::move_forward() {
 //calculate the distance between two points
 double rmdc_mover::distance(double x1, double y1, double x2, double y2) {
 
-    return sqrt(pow((x1 - x2), 2) + pow((y1 - y2), 2)) / 4.0;
+    return sqrt(pow((x1 - x2), 2) + pow((y1 - y2), 2));
 }
 
 //convert degrees to radians
@@ -289,6 +435,9 @@ void rmdc_mover::handle_controls(const state_machine::control & control) {
     } else if (message.compare("start") == 0) {
 
         this -> stop = false;
+
+    } else if (message.compare("return_home") == 0) {
+        this -> return_home();
     }
 }
 

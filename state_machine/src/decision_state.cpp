@@ -15,12 +15,14 @@
 #include "state_machine/control.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Int16.h"
+#include "std_msgs/Int32.h"
 #include "std_msgs/Float32.h"
 #include "../include/rmdc_state.h"
 #include <string>
 #include <iostream>
 #include <time.h>
 #include <stdlib.h>
+#include <sstream>
 
 //class to be used as a container for the decision state methods, callbacks and
 //data
@@ -32,17 +34,17 @@ public:
 
     //constructor
     decision_state(int how_many) : num_sonars(how_many),
-        dump_interval(60), return_to_home_interval(300), radius(10),
+        dump_interval(60), return_to_home_interval(600), radius(3),
         correcting(false), returning_home(false), dumping(false),
-        user_stopped(true) {
+        user_stopped(true), dump_time(0) {
             srand(time(NULL));
         }
 
     //constructor
     decision_state(int how_many, double rad) : num_sonars(how_many),
-        dump_interval(60), return_to_home_interval(300), radius(rad),
+        dump_interval(60), return_to_home_interval(600), radius(rad),
         correcting(false), returning_home(false), dumping(false),
-        user_stopped(true){
+        user_stopped(true), dump_time(0) {
             srand(time(NULL));
         }
 
@@ -77,6 +79,10 @@ public:
         //set up the publisher to send control messages
         this -> decision_publisher = (this -> nh)
             .advertise<state_machine::control>("/state_machine/control", 0);
+
+        //set up the publisher to send forklift messages
+        this -> fork_publisher = (this -> nh)
+            .advertise<std_msgs::Int32>("/state_machine/forklift", 0);
 
     }
 
@@ -121,11 +127,17 @@ private:
     //publisher for control messages
     ros::Publisher decision_publisher;
 
+    //publisher for forklift control
+    ros::Publisher fork_publisher;
+
     //how many sonars being used
     int num_sonars;
 
     //elapsed time
     int elapsed_time;
+
+    //time between dumps
+    int dump_time;
 
     //radius the robot is allowed to stay within in meters
     const double radius;
@@ -160,10 +172,15 @@ private:
 
     //callback function for timer interrupts
     void timer_callback(const std_msgs::Int16& message) {
+
+        if (this -> returning_home || this -> dumping || this -> user_stopped) {
+            return;
+        }
+
         this -> elapsed_time = message.data;
 
         state_machine::control msg;
-        msg.message = "home";
+        msg.message = "return_home";
         msg.num = 0;
 
         //if the algorithm is finished send a message to return home and
@@ -176,6 +193,8 @@ private:
             this -> start_stop_message("stop");
             //when done dont let the sonars affect anything
             this -> user_stopped = true;
+
+            ros::Duration(3).sleep();
             //tell the robot to return home
             this -> decision_publisher.publish(msg);
 
@@ -189,21 +208,27 @@ private:
             }
 
             //tell the robot to dump its load
-            msg.message = "drop";
-            this -> decision_publisher.publish(msg);
+            std_msgs::Int32 fork_mess;
+            fork_mess.data = 1;
+
+            this -> fork_publisher.publish(fork_mess);
             this -> dumping = true;
 
-        } else if (this -> elapsed_time >= this -> dump_interval) {
+        } else if (this -> elapsed_time - this -> dump_time >= this -> dump_interval) {
+
+            //keep track of last time we dumped
+            this -> dump_time = this -> elapsed_time;
 
             //avoid sonar interrupts
             this -> returning_home = true;
             //dont let the movement API to interfere
             this -> start_stop_message("stop");
+            ros::Duration(3).sleep();
             //tell the robot to go home
             this -> decision_publisher.publish(msg);
 
             //slow down the loop
-            ros::Rate loop_rate(10);
+            ros::Rate loop_rate(100);
 
             //wait until the robot is home
             while(this -> returning_home) {
@@ -212,8 +237,10 @@ private:
             }
 
             //tell the robot to dump its load
-            msg.message = "drop";
-            this -> decision_publisher.publish(msg);
+            std_msgs::Int32 fork_mess;
+            fork_mess.data = 1;
+
+            this -> fork_publisher.publish(fork_mess);
             this -> dumping = true;
 
             //wait until the robot has dumped its load
@@ -223,7 +250,6 @@ private:
             }
 
             this -> start_stop_message("start");
-
         }
     }
 
@@ -242,9 +268,14 @@ private:
 
         } else if(string_message.compare("start") ==0) {
 
+            state_machine::control msg;
+            msg.message = "start_home";
+            msg.num = 0;
+
+            this -> decision_publisher.publish(msg);
+            this -> user_stopped = false;
             this -> start_stop_message("start");
             this -> forward_message();
-            this -> user_stopped = false;
         }
 
     }
@@ -258,17 +289,19 @@ private:
         //make sure the robot stays within the given radius
         if (distance_traveled >= this -> radius) {
 
-            //first stop the robot
-            this -> start_stop_message("stop");
+            // //first stop the robot
+            // this -> start_stop_message("stop");
 
-            //next start the robot again
-            this -> start_stop_message("start");
+            // //next start the robot again
+            // this -> start_stop_message("start");
 
-            //determine a random angle to turn to and turn that way
-            this -> turn_message(this -> determine_random_angle());
+            // //determine a random angle to turn to and turn that way
+            // this -> turn_message(this -> determine_random_angle());
 
-            //move forward
-            this -> forward_message();
+            // //move forward
+            // this -> forward_message();
+
+            ROS_INFO("PASSED THE DESIRED RADIUS BOUNDRY");
 
         }
     }
@@ -286,11 +319,11 @@ private:
 
             this -> correcting = false;
 
-        } else if (con_message.compare("home") == 0) {
+        } else if (con_message.compare("return_done") == 0) {
 
             this -> returning_home = false;
 
-        } else if (con_message.compare("drop") == 0) {
+        } else if (con_message.compare("done") == 0) {
 
             this -> dumping = false;
 
