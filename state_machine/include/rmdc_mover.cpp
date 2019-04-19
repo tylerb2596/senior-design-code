@@ -85,8 +85,10 @@ void rmdc_mover::original_orientation() {
 
     ros::Rate loop_rate(10);
 
+    ROS_INFO("original orientation");
+
     while(ros::ok() && std::abs(this -> current_orientation -
-        this -> origin_orientation) > M_PI ) {
+        this -> origin_orientation) > M_PI/4 ) {
 
         ROS_INFO("%f", this -> current_orientation);
         ROS_INFO("%f", this -> origin_orientation);
@@ -109,23 +111,28 @@ void rmdc_mover::return_home() {
     //angle we want to cover
     double desired_angle;
 
-    if (this -> x_origin >= 0 && this -> y_origin >= 0) {
+    ROS_INFO("%f", this -> x_origin);
+    ROS_INFO("%f", this -> y_origin);
 
-        desired_angle = (360 - (180 - tan(this -> y_origin / this -> x_origin)));
 
-    } else if(this -> x_origin >= 0 && this -> y_origin < 0) {
+    if (this -> x_position >= 0 && this -> y_position >= 0) {
 
-        desired_angle = ((180 - tan(this -> y_origin / this -> x_origin)));
+        desired_angle = (2*M_PI - (M_PI - tan(this -> y_position / this -> x_position)));
 
-    } else if(this -> x_origin < 0 && this -> y_origin >= 0) {
+    } else if(this -> x_position >= 0 && this -> y_position < 0) {
 
-        desired_angle = (360 - tan(this -> y_origin / this -> x_origin));
+        desired_angle = ((M_PI - tan(this -> y_position / this -> x_position)));
+
+    } else if(this -> x_position < 0 && this -> y_position >= 0) {
+
+        desired_angle = (2*M_PI - tan(this -> y_position / this -> x_position));
 
     } else {
 
-        desired_angle = (tan(this -> y_origin / this -> x_origin));
+        desired_angle = (tan(this -> y_position / this -> x_position));
 
     }
+
 
     geometry_msgs::Twist msg;
 
@@ -150,17 +157,36 @@ void rmdc_mover::return_home() {
     //get the start time
     start_time = std::chrono::high_resolution_clock::now();
 
+    elapsed_time = (std::chrono::high_resolution_clock::now() - start_time);
+
     ROS_INFO("Returning home");
 
-    while(ros::ok() && elapsed_time.count() < desired_angle*(8/M_PI)) {
+    ROS_INFO("%f x pos", this -> x_position);
+    ROS_INFO("%f y pos", this -> y_position);
+    ROS_INFO("%f", desired_angle*(8/M_PI));
+    int x = 0;
+
+    while(ros::ok() && (int)(std::chrono::duration_cast<std::chrono::milliseconds>
+            (elapsed_time).count() / 1000) < desired_angle*(8/M_PI)) {
 
         pub.publish(msg);
 
         loop_rate.sleep();
 
-        elapsed_time = start_time - std::chrono::high_resolution_clock::now();
+        elapsed_time = (std::chrono::high_resolution_clock::now() - start_time);
 
-        this -> settle();
+        // ROS_INFO("%d", (int)(std::chrono::duration_cast<std::chrono::milliseconds>
+        //     (elapsed_time).count() / 1000));
+
+        if (x >= 100) {
+            ROS_INFO("%d", (int)(std::chrono::duration_cast<std::chrono::milliseconds>
+            (elapsed_time).count() / 1000));
+            x = 0;
+        }
+
+        // this -> settle();
+
+        ++x;
 
     }
 

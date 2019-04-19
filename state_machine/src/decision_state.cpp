@@ -222,7 +222,7 @@ private:
             //avoid sonar interrupts
             this -> returning_home = true;
             //dont let the movement API to interfere
-            this -> start_stop_message("stop");
+            //this -> start_stop_message("stop");
             ros::Duration(3).sleep();
             //tell the robot to go home
             this -> decision_publisher.publish(msg);
@@ -301,7 +301,7 @@ private:
             // //move forward
             // this -> forward_message();
 
-            ROS_INFO("PASSED THE DESIRED RADIUS BOUNDRY");
+            //ROS_INFO("PASSED THE DESIRED RADIUS BOUNDRY");
 
         }
     }

@@ -8,22 +8,22 @@ created by Tyler Brown -->
 <launch>
 	<!-- <node pkg="rosservice" type="rosservice" name="clear" args="/fiducial_slam/clear_map"/> -->
 	<!-- <include file="$(find magni_nav)/launch/aruco.launch"/> -->
-	<node pkg="rosserial_python" type="serial_node.py" name="serial_node">
+	<node pkg="rosserial_python" type="serial_node.py" name="serial_node" output="screen">
 		<param name="port" value="/dev/ttyACM0"/>
-		<param name="baud" value="115200"/>
+		<param name="baud" value="9600"/>
 	</node>
 	<!-- <node pkg="move_basic" type="move_basic" name="move"/> -->
 	<!-- <node pkg="simple_navigation_goals" type="simple_navigation_goals" name="navigation_home"/> -->
 	<!-- launch the sonar node -->
 	<include file="$(find pi_sonar)/launch/ubiquity_sonar.launch"/>
 	<!-- launch the sonar handler node -->
-	<node pkg="state_machine" name="sonar" type="sonar_handler"/>
+	<node pkg="state_machine" name="sonar" type="sonar_handler" output="screen"/>
 	<!-- launch the user_control node -->
-	<node pkg="state_machine" name="user_control" type="user_control.py"/>
+	<node pkg="state_machine" name="user_control" type="user_control.py" output="screen"/>
 	<!-- launch the decision state node -->
-	<node pkg="state_machine" name="decision" type="decision_state"/>
+	<node pkg="state_machine" name="decision" type="decision_state" output="screen"/>
 	<!-- launch the navigation state node -->
-	<node pkg="state_machine" name="navigation" type="navigation_state"/>
+	<node pkg="state_machine" name="navigation" type="navigation_state" output="screen"/>
 	<!-- launch the timer node -->
-	<node pkg="state_machine" name="timer" type="timer"/>
+	<node pkg="state_machine" name="timer" type="timer" output="screen"/>
 </launch>
